@@ -32,7 +32,7 @@ public class CrawlerRunner implements CommandLineRunner {
         long startTime = System.currentTimeMillis();
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        for (int i = 1; i <= 50; i++) {
+        for (int i = 1; i <= 2; i++) {
             CompletableFuture<Void> future = crawlerService.downloadChapter(i);
             futures.add(future);
         }
@@ -43,7 +43,7 @@ public class CrawlerRunner implements CommandLineRunner {
         long endTime = System.currentTimeMillis();
 
         log.info("--- TẤT CẢ CÁC LUỒNG ĐÃ HOÀN THÀNH ---");
-        log.info("Tổng thời gian tải và ghi 50 chương là: {} ms", (endTime - startTime));
+        log.info("Tổng thời gian tải và ghi 2 chương là: {} ms", (endTime - startTime));
         log.info("Hãy mở file truyen_full.txt ở thư mục gốc project để kiểm tra.");
     }
 }
