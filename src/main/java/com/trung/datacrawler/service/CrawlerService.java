@@ -1,6 +1,7 @@
 package com.trung.datacrawler.service;
 
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -10,21 +11,34 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class CrawlerService {
 
-    // Trỏ bean "crawlerTaskExecutor" đã cấu hình ở Bước 2 vào đây
+    private static final Logger log = LogManager.getLogger(CrawlerService.class);
+    private final FileWriterService fileWriterService;
+
+    // Inject FileWriterService
+    public CrawlerService(FileWriterService fileWriterService) {
+        this.fileWriterService = fileWriterService;
+    }
+
     @Async("crawlerTaskExecutor")
-    public CompletableFuture<String> downloadChapter(int chapterId) {
-        // Log ra để xem luồng nào đang xử lý chương nào
-        System.out.println(Thread.currentThread().getName() + " bắt đầu tải chương: " + chapterId);
+    public CompletableFuture<Void> downloadChapter(int chapterId) {
+        log.info("Bắt đầu tải chương: {}", chapterId);
 
         try {
-            // Giả lập thời gian tải ngẫu nhiên từ 500ms đến 1500ms
             int downloadTime = new Random().nextInt(1000) + 500;
             Thread.sleep(downloadTime);
+
+            // Giả lập nội dung tải được
+            String mockContent = "Đây là nội dung cực kỳ hấp dẫn của chương " + chapterId;
+
+            // Tải xong thì gọi hàm ghi file ngay lập tức
+            fileWriterService.writeChapter(chapterId, mockContent);
+
         } catch (InterruptedException e) {
+            log.error("Luồng bị gián đoạn khi tải chương: {}", chapterId, e);
             Thread.currentThread().interrupt();
         }
 
-        // Trả về kết quả bọc trong CompletableFuture (Lời hứa sẽ có kết quả trong tương lai)
-        return CompletableFuture.completedFuture("Nội dung của chương " + chapterId);
+        // Đổi kiểu trả về thành CompletableFuture<Void> vì ta đã tự ghi file, không cần gom text về Runner nữa
+        return CompletableFuture.completedFuture(null);
     }
 }
