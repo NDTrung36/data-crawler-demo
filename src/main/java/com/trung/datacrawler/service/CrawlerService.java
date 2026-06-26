@@ -20,8 +20,7 @@ public class CrawlerService {
         this.fileWriterService = fileWriterService;
     }
 
-    @Async("crawlerTaskExecutor")
-    public CompletableFuture<Void> downloadChapter(int chapterId) {
+    public ChapterDTO downloadChapter(int chapterId) {
         String url = String.format("https://truyenfull.today/dao-quan/chuong-%d/", chapterId);
         log.info("Đang kết nối để tải: {}", url);
 
@@ -68,6 +67,6 @@ public class CrawlerService {
             log.error("Lỗi khi tải chương {}: {}", chapterId, e.getMessage());
         }
 
-        return CompletableFuture.completedFuture(null);
+        return null;
     }
 }

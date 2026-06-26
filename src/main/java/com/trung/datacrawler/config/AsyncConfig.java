@@ -10,7 +10,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class AsyncConfig {
 
     @Bean(name = "crawlerTaskExecutor")
-    // ĐỔI KIỂU TRẢ VỀ TỪ Executor SANG ThreadPoolTaskExecutor Ở DÒNG DƯỚI ĐÂY
     public ThreadPoolTaskExecutor crawlerTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
