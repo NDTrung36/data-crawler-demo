@@ -14,20 +14,25 @@ public class FileWriterService {
 
     private static final Logger log = LogManager.getLogger(FileWriterService.class);
     private static final String FILE_PATH = "truyen_full.txt";
-
-    // Khởi tạo khóa. true = Fair Lock (luồng nào đến trước được cấp khóa trước)
     private final ReentrantLock lock = new ReentrantLock(true);
 
-    public void writeChapter(int chapterId, String content) {
-        lock.lock(); // Khóa lại (Critical Section bắt đầu)
+    // Đổi tham số từ chapterId (int) sang chapterTitle (String)
+    public void writeChapter(String chapterTitle, String content) {
+        lock.lock();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write("=== CHƯƠNG " + chapterId + " ===\n");
-            writer.write(content + "\n\n");
-            log.info("Đã chốt khóa và ghi thành công Chương {}", chapterId);
+            // Định dạng lại header của mỗi chương cho nổi bật
+            writer.write("==================================================\n");
+            writer.write("        " + chapterTitle.toUpperCase() + "\n");
+            writer.write("==================================================\n\n");
+
+            // Ghi nội dung đã được giữ nguyên format xuống dòng
+            writer.write(content + "\n\n\n");
+
+            log.info("Đã chốt khóa và ghi thành công: {}", chapterTitle);
         } catch (IOException e) {
-            log.error("Lỗi I/O khi ghi Chương {}", chapterId, e);
+            log.error("Lỗi I/O khi ghi {}", chapterTitle, e);
         } finally {
-            lock.unlock(); // Luôn luôn mở khóa trong finally để tránh Deadlock nếu có lỗi
+            lock.unlock();
         }
     }
 }

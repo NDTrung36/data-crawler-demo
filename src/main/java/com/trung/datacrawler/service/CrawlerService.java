@@ -22,32 +22,49 @@ public class CrawlerService {
 
     @Async("crawlerTaskExecutor")
     public CompletableFuture<Void> downloadChapter(int chapterId) {
-        // Áp dụng quy luật URL của bạn
         String url = String.format("https://truyenfull.today/dao-quan/chuong-%d/", chapterId);
         log.info("Đang kết nối để tải: {}", url);
 
         try {
-            // Dùng Jsoup kết nối đến URL, set timeout 10 giây tránh bị treo luồng
             Document doc = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)") // Giả lập trình duyệt để tránh bị block
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
                     .timeout(10000)
                     .get();
 
-            // Bóc tách nội dung (Phân tích HTML trang truyenfull.today thì ID chứa chữ là chapter-c)
+            // 1. Cào tiêu đề chương (VD: "Chương 1: Không Uổng Công")
+            // Truyenfull thường để title ở class .chapter-title
+            String chapterTitle = doc.select(".chapter-title").text();
+            if (chapterTitle.isEmpty()) {
+                chapterTitle = "Chương " + chapterId; // Fallback nếu không tìm thấy
+            }
+
+            // 2. Cào và xử lý nội dung
             Element contentElement = doc.getElementById("chapter-c");
 
             if (contentElement != null) {
-                // Lấy toàn bộ text bên trong, Jsoup tự động xử lý các thẻ <br> thành dấu xuống dòng
-                String content = contentElement.text();
+                // Lấy HTML thô thay vì text
+                String htmlContent = contentElement.html();
 
-                // Ghi vào file thông qua khóa ReentrantLock đã làm ở Giai đoạn 3
-                fileWriterService.writeChapter(chapterId, content);
+                // Dùng Regex để biến HTML thành Text giữ nguyên format
+                String formattedContent = htmlContent
+                        // Thay thế thẻ <br> (hoặc <br/>, <br />) thành 1 lần xuống dòng
+                        .replaceAll("(?i)<br\\s*/?>", "\n")
+                        // Thay thế thẻ đóng </p> thành 2 lần xuống dòng để tạo khoảng cách đoạn
+                        .replaceAll("(?i)</p>", "\n\n")
+                        // Xóa sạch tất cả các thẻ HTML còn sót lại (<div>, <i>, <b>...)
+                        .replaceAll("<[^>]+>", "")
+                        // Chuyển ký tự khoảng trắng đặc biệt của HTML thành dấu cách bình thường
+                        .replace("&nbsp;", " ")
+                        // Cắt khoảng trắng thừa ở đầu và cuối bài
+                        .trim();
+
+                // Truyền title và content đã format sang Service ghi file
+                fileWriterService.writeChapter(chapterTitle, formattedContent);
             } else {
                 log.warn("Chương {}: Không tìm thấy thẻ HTML chứa nội dung!", chapterId);
             }
 
         } catch (Exception e) {
-            // Bắt lỗi nếu rớt mạng, trang web sập, hoặc timeout
             log.error("Lỗi khi tải chương {}: {}", chapterId, e.getMessage());
         }
 
